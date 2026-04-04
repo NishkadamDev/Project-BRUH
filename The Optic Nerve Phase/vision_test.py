@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
+import sys
+sys.path.append('/home/pi/MasterPi/')
 import cv2
 import numpy as np
+import os
+os.system("sudo fuser -k /dev/video0 2>/dev/null")
+time.sleep(1)
 
-# Open camera
-cap = cv2.VideoCapture(0)
+# Open camera using Hiwonder's method
+cap = cv2.VideoCapture(-1)
+cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('Y', 'U', 'Y', 'V'))
+cap.set(cv2.CAP_PROP_FPS, 30)
+cap.set(cv2.CAP_PROP_SATURATION, 40)
+
 if not cap.isOpened():
-    # Try other indexes
-    for i in range(1, 10):
-        cap = cv2.VideoCapture(i)
-        if cap.isOpened():
-            print(f"Camera found at index {i}")
-            break
+    print("Failed to open camera!")
+    exit()
 
 print("Camera opened! Press Q to quit.")
 
@@ -29,34 +34,23 @@ while True:
 
     # Create mask for green pixels
     mask = cv2.inRange(hsv, lower_green, upper_green)
-
-    # Clean up mask with blur
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)
 
-    # Find contours of green regions
+    # Find contours
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if contours:
-        # Find the largest green object
         largest = max(contours, key=cv2.contourArea)
-
-        if cv2.contourArea(largest) > 500:  # Ignore tiny blobs
-            # Get bounding circle
+        if cv2.contourArea(largest) > 500:
             ((x, y), radius) = cv2.minEnclosingCircle(largest)
-
-            # Draw red circle around it
             cv2.circle(frame, (int(x), int(y)), int(radius), (0, 0, 255), 3)
-
-            # Label it
             cv2.putText(frame, "GREEN DETECTED", (int(x) - 80, int(y) - int(radius) - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-    # Show live feed
     cv2.imshow("MasterPi Vision", frame)
     cv2.imshow("Green Mask", mask)
 
-    # Press Q to quit
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
