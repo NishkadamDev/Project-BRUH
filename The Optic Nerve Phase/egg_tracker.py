@@ -49,8 +49,8 @@ try:
             break
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        lower_green = np.array([40, 100, 100])
-        upper_green = np.array([80, 255, 255])
+        lower_green = np.array([60, 200, 5])
+        upper_green = np.array([90, 255, 80])
         mask = cv2.inRange(hsv, lower_green, upper_green)
         mask = cv2.erode(mask, None, iterations=2)
         mask = cv2.dilate(mask, None, iterations=2)
